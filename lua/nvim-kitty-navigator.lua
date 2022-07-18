@@ -12,12 +12,18 @@ local function vim_navigate(direction)
   pcall(vim.cmd, 'wincmd ' .. direction)
 end
 
+M.vim_navigators = {}
+
 function M.navigate(direction)
   local nr = vim.fn.winnr()
   local kitty_last_pane = direction == 'p' and kitty_is_last_pane
 
   if not kitty_last_pane then
-    vim_navigate(direction)
+    if M.vim_navigators[direction] ~= nil then
+      M.vim_navigators[direction]()
+    else
+      vim_navigate(direction)
+    end
   end
 
   local at_tab_page_edge = (nr == vim.fn.winnr())
@@ -30,7 +36,10 @@ function M.navigate(direction)
   end
 end
 
-function M.setup()
+function M.setup(opts)
+  if opts ~= nil and opts.vim_navigators ~= nil then
+    M.vim_navigators = opts.vim_navigators
+  end
   vim.keymap.set('n', '<c-h>', function() require('nvim-kitty-navigator').navigate('h') end, { noremap = true, silent = true })
   vim.keymap.set('n', '<c-j>', function() require('nvim-kitty-navigator').navigate('j') end, { noremap = true, silent = true })
   vim.keymap.set('n', '<c-k>', function() require('nvim-kitty-navigator').navigate('k') end, { noremap = true, silent = true })
